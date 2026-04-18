@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "bioimagenes"
+version = "0.1.0"
+description = "Librería para procesamiento, análisis y visualización de imágenes digitales y médicas
+(radiografías, tomografías y termografías)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+{name = "Fernando Almirón"},
+{name = "Rafael Lallera"}
+]
+keywords = [
+"procesamiento de imágenes",
+"imágenes médicas",
+"tomografía",
+"radiografía",
+"termografía",
+"ingeniería biomédica"
+]
+classifiers = [
+"Programming Language :: Python :: 3",
+"Programming Language :: Python :: 3.10",
+"License :: OSI Approved :: MIT License",
+"Operating System :: OS Independent",
+"Intended Audience :: Science/Research",
+"Topic :: Scientific/Engineering :: Image Processing",
+"Topic :: Scientific/Engineering :: Medical Science Apps."
+]
+dependencies = [
+"numpy>=1.24",
+"matplotlib>=3.7",
+"opencv-python>=4.8",
+"pydicom>=2.4"
+]
+[tool.setuptools]
+package-dir = {"" = "src"}
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+[tool.ruff]
+    line-length = 88
+target-version = "py310"
