@@ -1,5 +1,17 @@
 from typing import Any, Tuple
-from bioimagenes.core.historial import Historial   # ajustá el import según tu estructura
+# #from bioimagenes.core.historial import Historial   # ajustá el import según tu estructura
+# import sys
+# import os
+
+# sys.path.append(
+#     os.path.abspath(
+#         os.path.join(os.path.dirname(__file__), "../../")
+#     )
+# )
+
+import numpy as np
+import matplotlib.pyplot as plt
+from bioimagenes.core.historial import Historial
 
 
 class Info:
@@ -12,72 +24,75 @@ class Info:
         dimensiones: Tuple[int, ...],
         brillo: float,
         historial: Historial = None,
-        cortada: bool = False
+        cortada: bool = False,
+        ruta_origen: str = None   
     ):
 
         # -------------------------
-        # VALIDACIÓN DE DIMENSIONES
+        # VALIDACIÓN DIMENSIONES
         # -------------------------
         if not isinstance(dimensiones, tuple):
             raise TypeError("dimensiones debe ser una tupla")
 
         for d in dimensiones:
-
             if not isinstance(d, int):
                 raise TypeError("cada dimensión debe ser un entero")
-
             if d <= 0:
                 raise ValueError("las dimensiones deben ser positivas")
 
         # -------------------------
-        # VALIDACIÓN DE BRILLO
+        # VALIDACIÓN BRILLO
         # -------------------------
         if not isinstance(brillo, (int, float)):
             raise TypeError("brillo debe ser numérico")
 
         # -------------------------
-        # VALIDACIÓN DE CORTADA
+        # VALIDACIÓN CORTADA
         # -------------------------
         if not isinstance(cortada, bool):
-            raise TypeError("cortada debe ser un booleano")
+            raise TypeError("cortada debe ser booleano")
 
         # -------------------------
-        # VALIDACIÓN / CREACIÓN DE HISTORIAL
+        # VALIDACIÓN HISTORIAL
         # -------------------------
         if historial is None:
-            # Si no se pasa historial, se crea uno nuevo
             self._historial = Historial()
-
         else:
-            # Verificamos que sea un objeto Historial
             if not isinstance(historial, Historial):
-                raise TypeError("historial debe ser un objeto de tipo Historial")
-
+                raise TypeError("historial debe ser tipo Historial")
             self._historial = historial
 
         # -------------------------
-        # ASIGNACIÓN DE ATRIBUTOS
+        # NUEVO: VALIDACIÓN RUTA
+        # -------------------------
+        if ruta_origen is not None and not isinstance(ruta_origen, str):
+            raise TypeError("ruta_origen debe ser string o None")
+
+        # -------------------------
+        # ASIGNACIÓN
         # -------------------------
         self._dimensiones = dimensiones
         self._brillo = float(brillo)
         self._cortada = cortada
+        self._ruta_origen = ruta_origen   
 
     # -------------------------
-    # MÉTODO __contains__
+    # CONTAINS
     # -------------------------
     def __contains__(self, key: str) -> bool:
 
-        claves_validas = [
+        claves = [
             "dimensiones",
             "brillo",
             "historial",
-            "cortada"
+            "cortada",
+            "ruta_origen"   
         ]
 
-        return key in claves_validas
+        return key in claves
 
     # -------------------------
-    # MÉTODO __getitem__
+    # GETITEM
     # -------------------------
     def __getitem__(self, key: str) -> Any:
 
@@ -93,20 +108,22 @@ class Info:
         elif key == "cortada":
             return self._cortada
 
+        elif key == "ruta_origen":   
+            return self._ruta_origen
+
         else:
             raise KeyError("Clave inválida")
 
     # -------------------------
-    # MÉTODO __str__
+    # STR
     # -------------------------
-    def __str__(self) -> str:
+    def __str__(self):
 
         texto = "Info("
-
-        texto += "dimensiones=" + str(self._dimensiones) + ", "
-        texto += "brillo=" + str(self._brillo) + ", "
-        texto += "cortada=" + str(self._cortada)
-
+        texto += f"dimensiones={self._dimensiones}, "
+        texto += f"brillo={self._brillo}, "
+        texto += f"cortada={self._cortada}, "
+        texto += f"ruta_origen={self._ruta_origen}"
         texto += ")"
 
         return texto
