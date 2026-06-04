@@ -145,7 +145,7 @@ termo = ImagenTermografica(
         float(data_temp.max())
     ),
     escala=(1.0, 0.0),
-    umbral_calor=float(np.mean(data_temp))
+    umbral_calor=float(np.percentile(data_temp, 75))
 )
 
 print("\nObjeto ImagenTermografica creado")
