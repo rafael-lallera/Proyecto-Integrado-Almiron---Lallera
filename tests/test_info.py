@@ -1,97 +1,273 @@
-##Pruebas de funcionamiento de la clase info de forma aislada
-import sys
-import os
+"""
+tests/test_manual_info.py
 
-sys.path.append(
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../src")
-    )
-)
+Prueba manual de la clase Info.
+
+Descripción general
+-------------------
+Este script verifica el funcionamiento de la clase Info
+de forma aislada, incluyendo:
+
+- Creación del objeto.
+- Acceso a atributos mediante indexación.
+- Uso del operador "in".
+- Interacción con el historial asociado.
+- Iteración sobre el historial.
+- Manejo de errores.
+- Validación de parámetros de inicialización.
+
+Dependencias
+------------
+- bioimagenes.core.info
+
+Autor
+-----
+Proyecto Bioimágenes
+"""
 
 from bioimagenes.core.info import Info
 
-info = Info((10, 10), 0.5)
 
-print("Objeto Info creado:")
+# ============================================================
+# 1. CREACIÓN DEL OBJETO INFO
+# ============================================================
+#
+# Se crea una instancia básica de Info.
+#
+# Se espera:
+# - Que el objeto se construya correctamente.
+# - Que los valores iniciales sean válidos.
+#
+
+info = Info(
+    dimensiones=(10, 10),
+    brillo=0.5
+)
+
+print("Objeto Info creado correctamente")
+
+print("\nRepresentación del objeto:")
 print(info)
 
-print("\nAcceso a atributos:")
+# ============================================================
+# 2. ACCESO A ATRIBUTOS
+# ============================================================
+#
+# Se verifica el acceso mediante __getitem__().
+#
+# Se espera:
+# - Recuperar correctamente los atributos almacenados.
+#
+
+print("\nAcceso a atributos")
 
 print("Dimensiones:", info["dimensiones"])
 print("Brillo:", info["brillo"])
 print("Cortada:", info["cortada"])
 
-print("\nPrueba de contains:")
+# ============================================================
+# 3. OPERADOR CONTAINS
+# ============================================================
+#
+# Se verifica el funcionamiento del operador "in".
+#
+# Se espera:
+# - Detectar claves válidas.
+# - Rechazar claves inexistentes.
+#
+
+print("\nPrueba del operador 'in'")
 
 print("¿Existe 'brillo'?", "brillo" in info)
 print("¿Existe 'historial'?", "historial" in info)
 print("¿Existe 'invalido'?", "invalido" in info)
 
-print("\nProbando historial:")
+# ============================================================
+# 4. PRUEBA DEL HISTORIAL
+# ============================================================
+#
+# Se agregan eventos al historial asociado.
+#
+# Se espera:
+# - Registrar correctamente los cambios.
+# - Mantener el orden de inserción.
+#
 
-hist = info["historial"]
+print("\nProbando historial")
 
-hist.modificar_historial("Filtro aplicado")
-hist.modificar_historial("Recorte")
+historial = info["historial"]
 
-print(hist)
+historial.modificar_historial(
+    "Filtro aplicado"
+)
 
-print("\nÚltimo cambio:")
-print(hist.ultimo_cambio)
+historial.modificar_historial(
+    "Recorte realizado"
+)
+
+print("\nContenido del historial:")
+print(historial)
+
+# ============================================================
+# 5. ÚLTIMO CAMBIO
+# ============================================================
+#
+# Se verifica la propiedad ultimo_cambio.
+#
+# Se espera:
+# - Recuperar el evento más reciente.
+#
+
+print("\nÚltimo cambio registrado:")
+print(historial.ultimo_cambio)
+
+# ============================================================
+# 6. CANTIDAD DE CAMBIOS
+# ============================================================
+#
+# Se verifica el método __len__().
+#
+# Se espera:
+# - Obtener la cantidad correcta de registros.
+#
 
 print("\nCantidad de cambios:")
-print(len(hist))
+print(len(historial))
 
-print("\nIterando historial:")
+# ============================================================
+# 7. ITERACIÓN DEL HISTORIAL
+# ============================================================
+#
+# Se recorre el historial utilizando un bucle for.
+#
+# Se espera:
+# - Acceder a cada evento en orden cronológico.
+#
 
-for cambio in hist:
+print("\nIterando historial")
+
+for cambio in historial:
     print("-", cambio)
 
-print("\nProbando clave inválida:")
+# ============================================================
+# 8. ACCESO A CLAVE INVÁLIDA
+# ============================================================
+#
+# Se intenta acceder a una clave inexistente.
+#
+# Se espera:
+# - Capturar la excepción correspondiente.
+#
+
+print("\nProbando clave inválida")
 
 try:
     print(info["no_existe"])
-except Exception as e:
-    print("Error capturado:", e)
 
-print("\nProbando errores de inicialización:")
+except Exception as error:
+    print("Error capturado:")
+    print(error)
 
-# dimensiones mal tipo
+# ============================================================
+# 9. VALIDACIÓN DE ERRORES DE INICIALIZACIÓN
+# ============================================================
+#
+# Se prueban distintos escenarios inválidos.
+#
+# Se espera:
+# - Que la clase rechace entradas incorrectas.
+#
+
+print("\nProbando errores de inicialización")
+
+# ------------------------------------------------------------
+# dimensiones con tipo incorrecto
+# ------------------------------------------------------------
+
 try:
-    Info([10, 10], 0.5)
-except Exception as e:
-    print("Error dimensiones:", e)
+    Info(
+        dimensiones=[10, 10],
+        brillo=0.5
+    )
 
+except Exception as error:
+    print("\nError dimensiones:")
+    print(error)
+
+# ------------------------------------------------------------
 # dimensión negativa
-try:
-    Info((10, -5), 0.5)
-except Exception as e:
-    print("Error dimensión negativa:", e)
+# ------------------------------------------------------------
 
-# brillo incorrecto
 try:
-    Info((10, 10), "alto")
-except Exception as e:
-    print("Error brillo:", e)
+    Info(
+        dimensiones=(10, -5),
+        brillo=0.5
+    )
 
+except Exception as error:
+    print("\nError dimensión negativa:")
+    print(error)
+
+# ------------------------------------------------------------
+# brillo inválido
+# ------------------------------------------------------------
+
+try:
+    Info(
+        dimensiones=(10, 10),
+        brillo="alto"
+    )
+
+except Exception as error:
+    print("\nError brillo:")
+    print(error)
+
+# ------------------------------------------------------------
 # historial inválido
+# ------------------------------------------------------------
+
 try:
-    Info((10, 10), 0.5, historial="cualquiera")
-except Exception as e:
-    print("Error historial:", e)
+    Info(
+        dimensiones=(10, 10),
+        brillo=0.5,
+        historial="cualquiera"
+    )
 
-print("\nPRUEBA COMPLETA:")
+except Exception as error:
+    print("\nError historial:")
+    print(error)
 
-info = Info((5, 5), 1.0)
+# ============================================================
+# 10. PRUEBA COMPLETA DE FUNCIONAMIENTO
+# ============================================================
+#
+# Se crea una nueva instancia y se registran eventos
+# en el historial.
+#
+# Se espera:
+# - Verificar la interacción conjunta de Info e Historial.
+#
 
-info["historial"].modificar_historial("Inicialización")
-info["historial"].modificar_historial("Ajuste de brillo")
+print("\nPRUEBA COMPLETA")
 
-print("\nInfo:")
+info = Info(
+    dimensiones=(5, 5),
+    brillo=1.0
+)
+
+info["historial"].modificar_historial(
+    "Inicialización"
+)
+
+info["historial"].modificar_historial(
+    "Ajuste de brillo"
+)
+
+print("\nObjeto Info:")
 print(info)
 
-print("\nHistorial:")
+print("\nHistorial asociado:")
 print(info["historial"])
 
-print("\nÚltimo cambio:")
+print("\nÚltimo cambio registrado:")
 print(info["historial"].ultimo_cambio)

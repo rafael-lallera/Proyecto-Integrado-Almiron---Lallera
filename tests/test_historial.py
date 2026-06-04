@@ -1,17 +1,57 @@
-##Pruebas de funcionamiento de la clase Historial de forma aislada
-import sys
-import os
+"""
+tests/test_historial.py
 
-sys.path.append(
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../src")
-    )
-)
+Prueba manual de la clase Historial.
+
+Descripción general
+-------------------
+Este script verifica el funcionamiento básico de la clase
+Historial de forma aislada.
+
+El objetivo es comprobar:
+
+- La creación correcta del objeto.
+- La inicialización del historial interno.
+- La representación textual mediante print().
+
+Dependencias
+------------
+- bioimagenes.core.historial
+
+Autor
+-----
+Proyecto Bioimágenes
+"""
 
 from bioimagenes.core.historial import Historial
 
 
-h = Historial()
+# ============================================================
+# 1. CREACIÓN DEL HISTORIAL
+# ============================================================
+#
+# Se instancia un objeto Historial vacío.
+#
+# Se espera:
+# - Que la creación no genere excepciones.
+# - Que el historial se inicialice correctamente.
+#
 
-print("Historial creado:")
-print(h)
+historial = Historial()
+
+print("Historial creado correctamente")
+
+# ============================================================
+# 2. VISUALIZACIÓN DEL CONTENIDO
+# ============================================================
+#
+# Se imprime la representación textual del historial.
+#
+# Se espera:
+# - Observar el estado inicial del historial.
+# - Verificar el funcionamiento del método __str__().
+#
+
+print("\nContenido del historial:")
+
+print(historial)
