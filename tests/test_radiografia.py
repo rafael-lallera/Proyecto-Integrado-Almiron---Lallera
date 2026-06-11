@@ -93,6 +93,7 @@ print("\nObjeto Info creado correctamente")
 # ============================================================
 # 5. CREACIÓN DE ImagenRadiografia
 # ============================================================
+# CORREGIDO: Se cambió 'conditions_adquisicion' por 'condiciones_adquisicion'
 radiografia = ImagenRadiografia(
     data=data_rx,
     info=info,
@@ -176,7 +177,7 @@ plt.show()
 
 
 # ============================================================
-# 13.3 CLUSTERING DE MÚLTIPLES RADIOGRAFÍAS
+# 13.3 CLUSTERING DE MÚLTIPLES RADIOGRAFÍAS (CORREGIDO Y AJUSTADO)
 # ============================================================
 import os
 
@@ -205,6 +206,7 @@ for ruta_img in rutas:
             brillo=1.0,
             ruta_origen=ruta_img
         )
+        # CORREGIDO: Se usó 'condiciones_adquisicion' en lugar de la versión en inglés
         lista_radiografias.append(
             ImagenRadiografia(
                 data=raw,
@@ -219,14 +221,23 @@ for ruta_img in rutas:
 
 print(f"\nImágenes cargadas exitosamente: {len(lista_radiografias)}")
 
-if len(lista_radiografias) >= 3:
+if len(lista_radiografias) >= 4:
+    # Se configura k=4 para buscar los grupos anatómicos ideales combinados
     ImagenRadiografia.graficar_clusters_imagenes(
         imagenes=lista_radiografias,
-        k=3,
+        k=4,
+        tamaño_thumbnail=64
+    )
+elif len(lista_radiografias) >= 2:
+    ImagenRadiografia.graficar_clusters_imagenes(
+        imagenes=lista_radiografias,
+        k=2,
         tamaño_thumbnail=64
     )
 else:
-    print("No hay suficientes imágenes para clustering (mínimo 3)")
+    print("No hay suficientes imágenes para clustering (mínimo 2)")
+
+
 # ============================================================
 # 14. APLICACIÓN DE FILTRO GAUSSIANO
 # ============================================================

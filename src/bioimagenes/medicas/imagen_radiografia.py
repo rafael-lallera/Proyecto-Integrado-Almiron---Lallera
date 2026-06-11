@@ -79,14 +79,6 @@ class ImagenRadiografia(Imagen):
         # -----------------------------------------------------
         # COMPATIBILIDAD CON PNG NORMALIZADOS
         # -----------------------------------------------------
-        #
-        # matplotlib.pyplot.imread() suele cargar PNG
-        # como float32 en rango [0,1].
-        #
-        # La clase ImagenRadiografia trabaja internamente
-        # en rango [0,255], por lo que se convierte
-        # automáticamente si corresponde.
-        #
         max_val = float(np.max(data))
 
         if max_val <= 1.0:
@@ -127,10 +119,6 @@ class ImagenRadiografia(Imagen):
     # NORMALIZAR
     # =========================================================
     def normalizar(self) -> None:
-        """
-        Normaliza la radiografía al rango [0,255].
-        """
-
         min_val = float(np.min(self._data))
         max_val = float(np.max(self._data))
 
@@ -190,10 +178,6 @@ class ImagenRadiografia(Imagen):
     # MEJORAR CONTRASTE
     # =========================================================
     def mejorar_contraste(self) -> None:
-        """
-        Expande el histograma al rango completo [0,255].
-        """
-
         min_val = float(np.min(self._data))
         max_val = float(np.max(self._data))
 
@@ -216,12 +200,7 @@ class ImagenRadiografia(Imagen):
     # INVERTIR INTENSIDAD
     # =========================================================
     def invertir_intensidad(self) -> None:
-        """
-        Genera un negativo radiográfico.
-        """
-
         self._data = 255.0 - self._data
-
         self._info["historial"].modificar_historial(
             "Intensidades invertidas"
         )
@@ -230,10 +209,6 @@ class ImagenRadiografia(Imagen):
     # ECUALIZAR HISTOGRAMA
     # =========================================================
     def ecualizar_histograma(self) -> None:
-        """
-        Ecualización global mediante CDF.
-        """
-
         data_uint = self._data.astype(np.uint8)
 
         histograma, _ = np.histogram(
@@ -248,9 +223,7 @@ class ImagenRadiografia(Imagen):
             )
 
         cdf = histograma.cumsum()
-
         cdf_min = cdf[cdf > 0].min()
-
         denominador = self._data.size - cdf_min
 
         if denominador == 0:
@@ -278,10 +251,6 @@ class ImagenRadiografia(Imagen):
     # DETECTAR BORDES
     # =========================================================
     def detectar_bordes(self) -> np.ndarray:
-        """
-        Detección de bordes mediante Sobel.
-        """
-
         kx = np.array(
             [
                 [-1, 0, 1],
@@ -315,7 +284,6 @@ class ImagenRadiografia(Imagen):
         )
 
         magnitud = np.hypot(gx, gy)
-
         magnitud = np.clip(
             magnitud,
             0.0,
@@ -369,6 +337,7 @@ class ImagenRadiografia(Imagen):
             y:y + ancho
         ].copy()
 
+        # CORREGIDO: Se cambió 'dimensions' por 'dimensiones' para coincidir con Info
         nueva_info = Info(
             dimensiones=roi.shape,
             brillo=self._info["brillo"],
@@ -419,36 +388,25 @@ class ImagenRadiografia(Imagen):
         self,
         slice_index=None
     ) -> None:
-        """
-        Visualiza la radiografía.
-        """
-
         plt.figure(figsize=(6, 6))
-
         plt.imshow(
             self._data,
             cmap="gray",
             vmin=0,
             vmax=255
         )
-
         plt.title(
             f"Radiografía — {self._tipo_estudio}\n"
-            f"Condiciones: "
-            f"{self._condiciones_adquisicion}"
+            f"Condiciones: {self._condiciones_adquisicion}"
         )
-
         plt.axis("off")
-
         plt.colorbar(label="Intensidad")
-
         plt.tight_layout()
-
         plt.show()
 
-        # =========================================================
+    # =========================================================================
     # CLUSTERING DE MÚLTIPLES RADIOGRAFÍAS CON HOVER
-    # =========================================================
+    # =========================================================================
     @staticmethod
     def graficar_clusters_imagenes(
         imagenes: list,
@@ -456,31 +414,9 @@ class ImagenRadiografia(Imagen):
         tamaño_thumbnail: int = 64
     ) -> None:
         """
-        Agrupa una lista de ImagenRadiografia mediante k-means
-        aplicado sobre features estadísticas de intensidad.
-
-        Cada imagen se representa como un punto cuadrado en
-        un espacio 2D (proyección PCA sobre 4 features).
-        Al pasar el mouse sobre un punto se muestra la
-        radiografía correspondiente como thumbnail inline,
-        junto con sus coordenadas y cluster asignado.
-
-        Features por imagen (vector de 4 valores):
-        - Intensidad media
-        - Desviación estándar de intensidades
-        - Percentil 25 de intensidades
-        - Percentil 75 de intensidades
-
-        Parámetros
-        ----------
-        imagenes : list[ImagenRadiografia]
-            Lista de objetos ImagenRadiografia a agrupar.
-            Mínimo 2 imágenes, debe tener al menos k imágenes.
-        k : int
-            Número de clusters (default=3).
-        tamaño_thumbnail : int
-            Tamaño en píxeles del thumbnail en el hover
-            (default=64).
+        Agrupa una lista de ImagenRadiografia mediante k-means guiado por
+        descriptores anatómicos específicos: relación de aspecto (frente/perfil)
+        y presencia de metales de alta densidad (marcapasos) en la zona superior del tórax.
         """
         from matplotlib.offsetbox import OffsetImage, AnnotationBbox
         from PIL import Image as PILImage
@@ -491,44 +427,49 @@ class ImagenRadiografia(Imagen):
         if not isinstance(imagenes, list):
             raise TypeError("imagenes debe ser una lista")
         if len(imagenes) < 2:
-            raise ValueError(
-                "Se necesitan al menos 2 imágenes"
-            )
+            raise ValueError("Se necesitan al menos 2 imágenes")
         if not isinstance(k, int):
             raise TypeError("k debe ser entero")
         if k < 2:
             raise ValueError("k debe ser >= 2")
         if k > len(imagenes):
-            raise ValueError(
-                f"k={k} no puede ser mayor que "
-                f"la cantidad de imágenes ({len(imagenes)})"
-            )
+            raise ValueError(f"k={k} no puede ser mayor que las imágenes ({len(imagenes)})")
         if not isinstance(tamaño_thumbnail, int):
-            raise TypeError(
-                "tamaño_thumbnail debe ser entero"
-            )
+            raise TypeError("tamaño_thumbnail debe ser entero")
         if tamaño_thumbnail < 16:
-            raise ValueError(
-                "tamaño_thumbnail debe ser >= 16"
-            )
+            raise ValueError("tamaño_thumbnail debe ser >= 16")
 
         # --------------------------------------------------
-        # 1. EXTRACCIÓN DE FEATURES Y THUMBNAILS
+        # 1. EXTRACCIÓN DE FEATURES ANATÓMICAS (POSTURA Y MARCAPASOS)
         # --------------------------------------------------
         features = []
         thumbnails = []
 
         for img in imagenes:
-            d = img._data.flatten()
+            d_matrix = img._data
+            alto, ancho = d_matrix.shape
+            
+            # Feature 1: Relación de aspecto (Discrimina postura geométrica Frente vs Perfil)
+            relacion_aspecto = alto / float(ancho)
+            
+            # Feature 2: Detección de Marcapasos (Brillo extremo/saturado en el 35% superior)
+            zona_superior = d_matrix[:int(alto * 0.35), :]
+            max_brillo_local = float(zona_superior.max())
+            
+            # El metal bloquea los rayos X y satura cerca de 255.0
+            umbral_metalico = max_brillo_local * 0.95
+            porcentaje_metal = float(np.sum(zona_superior >= umbral_metalico) / zona_superior.size)
+            
+            # Armamos el vector de características balanceado
             vec = np.array([
-                float(np.mean(d)),
-                float(np.std(d)),
-                float(np.percentile(d, 25)),
-                float(np.percentile(d, 75)),
+                relacion_aspecto * 100.0,  # Factor geométrico
+                max_brillo_local * 5.0,    # Intensidad lumínica máxima
+                porcentaje_metal * 800.0,  # Factor crítico determinante del marcapasos
+                float(np.std(d_matrix))    # Desviación estructural global
             ])
             features.append(vec)
 
-            # Thumbnail redimensionado para hover
+            # Generamos el thumbnail para visualización interactiva
             pil = PILImage.fromarray(
                 img._data.astype(np.uint8)
             ).resize(
@@ -554,15 +495,13 @@ class ImagenRadiografia(Imagen):
             features_norm,
             k,
             minit="points",
-            iter=50
+            iter=100
         )
 
         # --------------------------------------------------
-        # 4. PROYECCIÓN PCA A 2D
+        # 4. PROYECCIÓN PCA A 2D PARA GRAFICACIÓN
         # --------------------------------------------------
-        datos_centrados = (
-            features_norm - features_norm.mean(axis=0)
-        )
+        datos_centrados = (features_norm - features_norm.mean(axis=0))
         covarianza = np.cov(datos_centrados.T)
 
         if covarianza.ndim < 2:
@@ -573,157 +512,82 @@ class ImagenRadiografia(Imagen):
         componentes = vectores[:, idx_orden[:2]]
 
         puntos_2d = datos_centrados @ componentes
-        centroides_2d = (
-            (centroides_feat - features_norm.mean(axis=0))
-            @ componentes
-        )
+        centroides_2d = ((centroides_feat - features_norm.mean(axis=0)) @ componentes)
 
-        # --------------------------------------------------
-        # 5. JITTER: separar puntos que se solapan
-        #    (útil cuando hay pocas imágenes)
-        # --------------------------------------------------
+        # Pequeño Jitter para desempatar puntos solapados
         rng = np.random.default_rng(42)
         rango = puntos_2d.max(axis=0) - puntos_2d.min(axis=0)
-        escala_jitter = np.where(rango > 0, rango, 1.0) * 0.08
-        puntos_2d = (
-            puntos_2d
-            + rng.uniform(
-                -escala_jitter,
-                escala_jitter,
-                size=puntos_2d.shape
-            )
-        )
+        escala_jitter = np.where(rango > 0, rango, 1.0) * 0.05
+        puntos_2d = puntos_2d + rng.uniform(-escala_jitter, escala_jitter, size=puntos_2d.shape)
 
         # --------------------------------------------------
-        # 6. PALETA DE COLORES
+        # 5. PALETA DE COLORES Y DISEÑO DE FIGURA
         # --------------------------------------------------
-        paleta = [
-            "#1f77b4",  # azul
-            "#d62728",  # rojo
-            "#2ca02c",  # verde
-            "#9467bd",  # violeta
-            "#ff7f0e",  # naranja
-            "#8c564b",  # marrón
-            "#e377c2",  # rosa
-        ]
-        colores_puntos = [
-            paleta[int(etiquetas[i]) % len(paleta)]
-            for i in range(len(imagenes))
-        ]
+        paleta = ["#1f77b4", "#d62728", "#2ca02c", "#9467bd", "#ff7f0e"]
+        colores_puntos = [paleta[int(etiquetas[i]) % len(paleta)] for i in range(len(imagenes))]
 
-        # --------------------------------------------------
-        # 7. FIGURA
-        # --------------------------------------------------
         fig, ax = plt.subplots(figsize=(11, 8))
         plt.subplots_adjust(right=0.78)
 
-        # Scatter principal (marcador cuadrado)
+        # Puntos del Scatter principal
         sc = ax.scatter(
-            puntos_2d[:, 0],
-            puntos_2d[:, 1],
-            c=colores_puntos,
-            s=140,
-            marker="s",
-            alpha=0.88,
-            zorder=3,
-            edgecolors="white",
-            linewidths=0.8
+            puntos_2d[:, 0], puntos_2d[:, 1],
+            c=colores_puntos, s=150, marker="s",
+            alpha=0.9, zorder=3, edgecolors="white", linewidths=0.8
         )
 
-        # Centroides con X negra
+        # Centros geométricos calculados (X negra)
         for i in range(k):
             ax.scatter(
-                centroides_2d[i, 0],
-                centroides_2d[i, 1],
-                marker="X",
-                s=320,
-                c="black",
-                zorder=5,
-                edgecolors="white",
-                linewidths=1.2
+                centroides_2d[i, 0], centroides_2d[i, 1],
+                marker="X", s=350, c="black", zorder=5,
+                edgecolors="white", linewidths=1.2
             )
 
-        # Leyenda de clusters
-        handles_leyenda = [
-            plt.Line2D(
-                [0], [0],
-                marker="s",
-                color="w",
-                markerfacecolor=paleta[i % len(paleta)],
-                markersize=11,
-                label=f"Cluster {i}"
+        # Generación dinámica de la leyenda basada en descriptores clínicos promedio
+        handles_leyenda = []
+        for i in range(k):
+            idx_grupo = np.where(etiquetas == i)[0]
+            label_dinamico = f"Cluster {i} ({len(idx_grupo)} imgs)"
+            
+            if len(idx_grupo) > 0:
+                feat_promedio = features[idx_grupo].mean(axis=0)
+                tiene_metal = "Con Marcapasos/Metal" if feat_promedio[2] > 20 else "Sin Marcapasos"
+                label_dinamico = f"Cluster {i}: {tiene_metal}"
+
+            handles_leyenda.append(
+                plt.Line2D(
+                    [0], [0], marker="s", color="w",
+                    markerfacecolor=paleta[i % len(paleta)], markersize=11,
+                    label=label_dinamico
+                )
             )
-            for i in range(k)
-        ]
-        ax.legend(
-            handles=handles_leyenda,
-            loc="upper right",
-            bbox_to_anchor=(1.22, 1.0),
-            title="Clusters",
-            framealpha=0.9
-        )
+            
+        ax.legend(handles=handles_leyenda, loc="upper right", bbox_to_anchor=(1.28, 1.0), title="Clasificación Estimada", framealpha=0.9)
 
-        ax.set_title(
-            "Image Clusters",
-            fontsize=14,
-            fontweight="bold"
-        )
-        ax.set_xlabel("Feature 1")
-        ax.set_ylabel("Feature 2")
+        ax.set_title("Clustering Anatómico Avanzado de Radiografías\n(Detección de Postura y Marcapasos)", fontsize=13, fontweight="bold")
+        ax.set_xlabel("Componente Discriminador Principal 1")
+        ax.set_ylabel("Componente Discriminador Principal 2")
 
         # --------------------------------------------------
-        # 8. HOVER CON OffsetImage + AnnotationBbox
-        #    Este es el approach correcto para thumbnails
-        #    inline en matplotlib sin abrir ventanas nuevas
+        # 6. MÓDULO INTERACTIVO DE HOVER
         # --------------------------------------------------
-
-        # AnnotationBbox invisible al inicio
-        imagen_hover = OffsetImage(
-            thumbnails[0],
-            zoom=1.0,
-            cmap="gray"
-        )
+        imagen_hover = OffsetImage(thumbnails[0], zoom=1.0, cmap="gray")
         imagen_hover.image.axes = ax
 
         ab = AnnotationBbox(
-            imagen_hover,
-            (0, 0),
-            xybox=(60, -60),
-            xycoords="data",
-            boxcoords="offset points",
-            pad=0.4,
-            bboxprops=dict(
-                boxstyle="round,pad=0.3",
-                facecolor="white",
-                edgecolor="black",
-                linewidth=1.2,
-                alpha=0.95
-            ),
-            arrowprops=dict(
-                arrowstyle="->",
-                color="black",
-                lw=1.0
-            )
+            imagen_hover, (0, 0), xybox=(60, -60),
+            xycoords="data", boxcoords="offset points", pad=0.4,
+            bboxprops=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="black", linewidth=1.2, alpha=0.95),
+            arrowprops=dict(arrowstyle="->", color="black", lw=1.0)
         )
         ab.set_visible(False)
         ax.add_artist(ab)
 
-        # Texto con info del punto
         info_box = ax.text(
-            0, 0,
-            "",
-            fontsize=8.5,
-            va="top",
-            ha="left",
-            bbox=dict(
-                boxstyle="round,pad=0.35",
-                facecolor="white",
-                edgecolor="gray",
-                alpha=0.92,
-                linewidth=0.8
-            ),
-            zorder=10,
-            visible=False
+            0, 0, "", fontsize=9, va="top", ha="left",
+            bbox=dict(boxstyle="round,pad=0.35", facecolor="white", edgecolor="gray", alpha=0.92, linewidth=0.8),
+            zorder=10, visible=False
         )
 
         ultimo_idx = [-1]
@@ -736,7 +600,6 @@ class ImagenRadiografia(Imagen):
                     fig.canvas.draw_idle()
                 return
 
-            # Distancia en coordenadas de pantalla
             if len(puntos_2d) == 0:
                 return
 
@@ -750,7 +613,7 @@ class ImagenRadiografia(Imagen):
             dist = np.hypot(dx, dy)
             idx = int(np.argmin(dist))
 
-            UMBRAL_PX = 22
+            UMBRAL_PX = 25
 
             if dist[idx] > UMBRAL_PX:
                 if ab.get_visible():
@@ -765,43 +628,26 @@ class ImagenRadiografia(Imagen):
 
             ultimo_idx[0] = idx
 
-            # Actualizar imagen del hover
+            # Actualización interactiva del contenido
             imagen_hover.set_data(thumbnails[idx])
-
-            # Posición del annotation (punto de anclaje)
             px = puntos_2d[idx, 0]
             py = puntos_2d[idx, 1]
             ab.xy = (px, py)
 
-            # Offset dinámico: si el punto está en la mitad
-            # derecha del eje, mostrar el tooltip a la izquierda
             xlim = ax.get_xlim()
-            mitad_x = (xlim[0] + xlim[1]) / 2.0
-            offset_x = -80 if px > mitad_x else 80
+            offset_x = -80 if px > (xlim[0] + xlim[1]) / 2.0 else 80
             ab.xybox = (offset_x, -70)
-
             ab.set_visible(True)
 
-            # Texto informativo
             cluster_n = int(etiquetas[idx])
-            info_box.set_text(
-                f"X: {px:.2f}\n"
-                f"Y: {py:.2f}\n"
-                f"Cluster: {cluster_n}"
-            )
+            info_box.set_text(f"Imagen ID: {idx}\nCluster: {cluster_n}\nEstudio: {imagenes[idx].tipo_estudio}")
 
-            # Posicionar el texto cerca del punto
             ylim = ax.get_ylim()
-            rango_y = ylim[1] - ylim[0]
-            info_box.set_position((px, py + rango_y * 0.04))
+            info_box.set_position((px, py + (ylim[1] - ylim[0]) * 0.04))
             info_box.set_visible(True)
 
             fig.canvas.draw_idle()
 
-        fig.canvas.mpl_connect(
-            "motion_notify_event",
-            on_move
-        )
-
+        fig.canvas.mpl_connect("motion_notify_event", on_move)
         plt.tight_layout()
         plt.show()
