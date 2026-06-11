@@ -1,0 +1,10 @@
+# Archivos compilados de Python
+__pycache__/
+*.pyc
+
+# Archivos NIfTI
+*.nii
+*.nii.gz
+
+# Carpeta de tomografía
+docs/tomografia/
