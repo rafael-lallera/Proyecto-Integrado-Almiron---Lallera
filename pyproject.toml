@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "bioimagenes"
 version = "0.1.0"
-description = "Librería Python para procesamiento, análisis y visualización de imágenes biomédicas (tomografías, radiografías, termografías)."
+description = "Librería Python para el procesamiento, análisis y visualización de imágenes biomédicas."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
@@ -13,13 +13,22 @@ authors = [
     { name = "Rafael Lallera" },
 ]
 requires-python = ">=3.11"
-keywords = ["biomedical", "imaging", "medical-imaging", "tomography", "radiography", "thermography", "image-processing"]
+keywords = [
+    "biomedical",
+    "imaging",
+    "medical-imaging",
+    "image-processing",
+    "radiography",
+    "thermography",
+    "tomography",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Healthcare Industry",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
     "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Visualization",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -29,6 +38,10 @@ classifiers = [
 dependencies = [
     "numpy>=1.24",
     "matplotlib>=3.7",
+    "scipy>=1.10",
+    "pillow>=10.0",
+    "nibabel>=5.0",
+    "plotly>=5.18",
 ]
 
 [project.optional-dependencies]
